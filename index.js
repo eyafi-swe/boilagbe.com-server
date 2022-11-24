@@ -22,7 +22,7 @@ function verifyJWT(req, res, next) {
 
     const token = authHeader.split(' ')[1];
 
-    jwt.verify(token, process.env.ACCESS_TOKEN, function (err, decoded) {
+    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, function (err, decoded) {
         if (err) {
             return res.status(403).send({ message: 'forbidden access' })
         }
@@ -37,6 +37,7 @@ const run = async () => {
 
         const categoriesCollection = client.db("boilagbedb").collection("categories");
         const userCollection = client.db("boilagbedb").collection("users");
+        const productCollection = client.db("boilagbedb").collection("products");
         app.get('/admin/categories', async (req, res) => {
             const query = {};
             const cursor = categoriesCollection.find(query);
@@ -77,6 +78,13 @@ const run = async () => {
             const accountType = user?.accountType;
             res.send({accountType});
         })
+
+        app.post('/products',verifyJWT, async(req,res)=>{
+            const product = req.body;
+            const result = await productCollection.insertOne(product);
+            res.send(result);
+        })
+
 
     } finally {
 
