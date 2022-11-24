@@ -104,7 +104,7 @@ const run = async () => {
             const options = { upsert: true };
             const updatedDoc = {
                 $set: {
-                    status: 'Sold'
+                    advertisement: 'Advertised'
                 }
             }
             const result = await productCollection.updateOne(filter, updatedDoc, options);
