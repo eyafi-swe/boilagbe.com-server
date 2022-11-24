@@ -70,6 +70,14 @@ const run = async () => {
             res.send({alreadyStored:true});
         });
 
+        app.get('/admin/users/:email',async (req,res)=>{
+            const email = req.params.email;
+            const query = {email:email};
+            const user = await userCollection.findOne(query);
+            const accountType = user?.accountType;
+            res.send({accountType});
+        })
+
     } finally {
 
     }
@@ -85,8 +93,6 @@ run().catch(console.dir);
 app.get('/', (req, res) => {
     res.send('Boilagbe server running!')
 })
-
-
 
 app.listen(port, () => {
     console.log(`Boilagbe server listening on port ${port}`)
