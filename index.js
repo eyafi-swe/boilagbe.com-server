@@ -38,6 +38,19 @@ const run = async () => {
         const categoriesCollection = client.db("boilagbedb").collection("categories");
         const userCollection = client.db("boilagbedb").collection("users");
         const productCollection = client.db("boilagbedb").collection("products");
+
+        const verifySeller = async (req, res, next) => {
+            const decodedEmail = req.decoded.email;
+            const query = { email: decodedEmail };
+            const user = await userCollection.findOne(query);
+
+            if (user?.accountType !== 'Seller') {
+                return res.status(403).send({ message: 'forbidden access' })
+            }
+            next();
+        }
+
+
         app.get('/admin/categories', async (req, res) => {
             const query = {};
             const cursor = categoriesCollection.find(query);
@@ -68,23 +81,54 @@ const run = async () => {
                 const result = await userCollection.insertOne(user);
                 return res.send(result);
             }
-            res.send({alreadyStored:true});
+            res.send({ alreadyStored: true });
         });
 
-        app.get('/admin/users/:email',async (req,res)=>{
+        app.get('/admin/users/:email', async (req, res) => {
             const email = req.params.email;
-            const query = {email:email};
+            const query = { email: email };
             const user = await userCollection.findOne(query);
             const accountType = user?.accountType;
-            res.send({accountType});
+            res.send({ accountType });
         })
 
-        app.post('/products',verifyJWT, async(req,res)=>{
+        app.post('/products', verifyJWT, verifySeller, async (req, res) => {
             const product = req.body;
             const result = await productCollection.insertOne(product);
             res.send(result);
         })
 
+        app.put('/products/:id', verifyJWT, async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: ObjectId(id) }
+            const options = { upsert: true };
+            const updatedDoc = {
+                $set: {
+                    status: 'Sold'
+                }
+            }
+            const result = await productCollection.updateOne(filter, updatedDoc, options);
+            res.send(result);
+        });
+
+        app.delete('/products/:id', verifyJWT, verifySeller, async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: ObjectId(id) };
+            const result = await productCollection.deleteOne(filter);
+            res.send(result);
+        })
+
+        app.get('/products',verifyJWT, async (req, res) => {
+            const email = req.query.email;
+            const decodedEmail = req.decoded.email;
+            if (email !== decodedEmail) {
+                return res.status(403).send({ message: 'forbidden access' });
+            }
+
+            const query = { email: email };
+            const allProducts = await productCollection.find(query).toArray();
+            res.send(allProducts);
+        })
 
     } finally {
 
