@@ -5,7 +5,7 @@ const app = express()
 const port = process.env.PORT || 5000
 const cors = require('cors');
 require('dotenv').config();
-
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 app.use(cors());
 app.use(express.json());
 
@@ -39,6 +39,7 @@ const run = async () => {
         const userCollection = client.db("boilagbedb").collection("users");
         const productCollection = client.db("boilagbedb").collection("products");
         const bookingCollection = client.db("boilagbedb").collection("bookings");
+        const paymentCollection = client.db("boilagbedb").collection("payments");
 
         const verifySeller = async (req, res, next) => {
             const decodedEmail = req.decoded.email;
@@ -153,7 +154,61 @@ const run = async () => {
             res.send(result);
         })
 
+        app.get('/booking',verifyJWT,async(req,res)=>{
+            const email = req.query.email;
+            const query = {buyerEmail:email};
+            const myOrders = await bookingCollection.find(query).toArray();
+            res.send(myOrders);
+        })
 
+        app.get('/booking/:id', async(req,res)=>{
+            const id = req.params.id;
+            const query = {
+                _id:ObjectId(id)
+            };
+            const booking = await bookingCollection.findOne(query);
+            res.send(booking);
+        })
+
+        app.post('/create-payment-intent', async (req, res) => {
+            const booking = req.body;
+            const price = booking.sellingPrice;
+            const amount = price * 100;
+
+            const paymentIntent = await stripe.paymentIntents.create({
+                currency: 'usd',
+                amount: amount,
+                "payment_method_types": [
+                    "card"
+                ]
+            });
+            res.send({
+                clientSecret: paymentIntent.client_secret,
+            });
+        });
+
+        app.post('/payments', async (req, res) =>{
+            const payment = req.body;
+            const result = await paymentCollection.insertOne(payment);
+            const id = payment.bookingId
+            const filter = {_id: ObjectId(id)}
+            const updatedDoc = {
+                $set: {
+                    paid: true,
+                    transactionId: payment.transactionId
+                }
+            }
+            const updatedResult = await bookingCollection.updateOne(filter, updatedDoc);
+            const productId = payment.productId;
+            const filterProduct = {_id:ObjectId(productId)};
+            const updateStatus = {
+                $set:{
+                    status:'Sold',
+                }
+            }
+            const updatedProduct = await productCollection.updateOne(filterProduct,updateStatus);
+            res.send(result);
+        })
 
     } finally {
 
