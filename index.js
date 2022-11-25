@@ -118,17 +118,20 @@ const run = async () => {
             res.send(result);
         })
 
-        app.get('/products',verifyJWT, async (req, res) => {
+        app.get('/products', async (req, res) => {
             const email = req.query.email;
-            const decodedEmail = req.decoded.email;
-            if (email !== decodedEmail) {
-                return res.status(403).send({ message: 'forbidden access' });
-            }
+            // const decodedEmail = req.decoded.email;
+            // if (email !== decodedEmail) {
+            //     return res.status(403).send({ message: 'forbidden access' });
+            // }
 
             const query = { email: email };
             const allProducts = await productCollection.find(query).toArray();
             res.send(allProducts);
         })
+
+        // app.get('/advertised')
+
 
     } finally {
 
