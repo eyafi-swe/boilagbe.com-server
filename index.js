@@ -38,6 +38,7 @@ const run = async () => {
         const categoriesCollection = client.db("boilagbedb").collection("categories");
         const userCollection = client.db("boilagbedb").collection("users");
         const productCollection = client.db("boilagbedb").collection("products");
+        const bookingCollection = client.db("boilagbedb").collection("bookings");
 
         const verifySeller = async (req, res, next) => {
             const decodedEmail = req.decoded.email;
@@ -144,6 +145,14 @@ const run = async () => {
             const advertisedProducts = await productCollection.find(query).toArray();
             res.send(advertisedProducts);
         })
+
+
+        app.post('/booking', async(req,res)=>{
+            const book = req.body;
+            const result = await bookingCollection.insertOne(book);
+            res.send(result);
+        })
+
 
 
     } finally {
