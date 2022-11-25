@@ -120,17 +120,16 @@ const run = async () => {
 
         app.get('/products', async (req, res) => {
             const email = req.query.email;
-            // const decodedEmail = req.decoded.email;
-            // if (email !== decodedEmail) {
-            //     return res.status(403).send({ message: 'forbidden access' });
-            // }
-
             const query = { email: email };
             const allProducts = await productCollection.find(query).toArray();
             res.send(allProducts);
         })
 
-        // app.get('/advertised')
+        app.get('/advertised', async(req,res)=>{
+            const query = {advertisement:'Advertised'};
+            const advertisedProducts = await productCollection.find(query).toArray();
+            res.send(advertisedProducts);
+        })
 
 
     } finally {
