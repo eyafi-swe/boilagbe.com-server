@@ -125,6 +125,13 @@ const run = async () => {
             res.send(allProducts);
         })
 
+        app.get('/products/:id', async(req,res)=>{
+            const id = req.params.id;
+            const query = {categoryId:id};
+            const result = await productCollection.find(query).toArray();
+            res.send(result);
+        })
+
         app.get('/advertised', async(req,res)=>{
             const query = {advertisement:'Advertised'};
             const advertisedProducts = await productCollection.find(query).toArray();
