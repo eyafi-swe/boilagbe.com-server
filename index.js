@@ -94,6 +94,13 @@ const run = async () => {
 
         app.post('/products', verifyJWT, verifySeller, async (req, res) => {
             const product = req.body;
+            const date = new Date();
+            const options = {
+                weekday: "long", year: "numeric", month: "short",
+                day: "numeric", hour: "2-digit", minute: "2-digit"
+            };
+            const formatedDateTime = date.toLocaleTimeString("en-us", options);
+            product.postTime = formatedDateTime;
             const result = await productCollection.insertOne(product);
             res.send(result);
         })
@@ -125,15 +132,15 @@ const run = async () => {
             res.send(allProducts);
         })
 
-        app.get('/products/:id', async(req,res)=>{
+        app.get('/products/:id', async (req, res) => {
             const id = req.params.id;
-            const query = {categoryId:id};
+            const query = { categoryId: id };
             const result = await productCollection.find(query).toArray();
             res.send(result);
         })
 
-        app.get('/advertised', async(req,res)=>{
-            const query = {advertisement:'Advertised'};
+        app.get('/advertised', async (req, res) => {
+            const query = { advertisement: 'Advertised' };
             const advertisedProducts = await productCollection.find(query).toArray();
             res.send(advertisedProducts);
         })
