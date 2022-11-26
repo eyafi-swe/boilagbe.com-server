@@ -138,13 +138,17 @@ const run = async () => {
             const id = req.params.id;
             const query = { categoryId: id };
             const result = await productCollection.find(query).toArray();
-            res.send(result);
+            const unsoldProducts = result.filter(res=> res?.status !== 'Sold');
+            console.log(unsoldProducts);
+
+            res.send(unsoldProducts);
         })
 
         app.get('/advertised', async (req, res) => {
             const query = { advertisement: 'Advertised' };
             const advertisedProducts = await productCollection.find(query).toArray();
-            res.send(advertisedProducts);
+            const unsoldProducts = advertisedProducts.filter(res=> res?.status !== 'Sold');
+            res.send(unsoldProducts);
         })
 
 
