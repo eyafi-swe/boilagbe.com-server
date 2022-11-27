@@ -87,6 +87,28 @@ const run = async () => {
             res.send({ alreadyStored: true });
         });
 
+        app.get('/admin/users',verifyJWT, async(req,res)=>{
+            const accountType = req.query.accountType;
+            const query = {
+                accountType:accountType
+            }
+            const result = await userCollection.find(query).toArray();
+            res.send(result);
+        })
+
+        app.put('/admin/users/:id', verifyJWT, async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: ObjectId(id) }
+            const options = { upsert: true };
+            const verifiedUser = {
+                $set: {
+                    isVerified: true
+                }
+            }
+            const result = await userCollection.updateOne(filter, verifiedUser, options);
+            res.send(result);
+        });
+
         app.get('/admin/users/:email', async (req, res) => {
             const email = req.params.email;
             const query = { email: email };
