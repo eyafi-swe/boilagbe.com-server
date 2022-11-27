@@ -105,7 +105,16 @@ const run = async () => {
                     isVerified: true
                 }
             }
+          
             const result = await userCollection.updateOne(filter, verifiedUser, options);
+            const user = await userCollection.findOne(filter);
+            const query = {email:user.email};
+            const updateverifiedSellersProduct = {
+                $set:{
+                    verifiedSeller:true
+                }
+            }
+            const updateverifiedSellersProductResult = await productCollection.updateMany(query,updateverifiedSellersProduct,options);
             res.send(result);
         });
 
@@ -161,17 +170,17 @@ const run = async () => {
             const id = req.params.id;
             const query = { categoryId: id };
             const result = await productCollection.find(query).toArray();
-            const unsoldProducts = result.filter(res=> res?.status !== 'Sold');
-            console.log(unsoldProducts);
+            const availableBooks = result.filter(res=> res?.status !== 'Sold');
+            console.log(availableBooks);
 
-            res.send(unsoldProducts);
+            res.send(availableBooks);
         })
 
         app.get('/advertised', async (req, res) => {
             const query = { advertisement: 'Advertised' };
             const advertisedProducts = await productCollection.find(query).toArray();
-            const unsoldProducts = advertisedProducts.filter(res=> res?.status !== 'Sold');
-            res.send(unsoldProducts);
+            const availableBooks = advertisedProducts.filter(res=> res?.status !== 'Sold');
+            res.send(availableBooks);
         })
 
 
