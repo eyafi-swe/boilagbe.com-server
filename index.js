@@ -40,6 +40,7 @@ const run = async () => {
         const productCollection = client.db("boilagbedb").collection("products");
         const bookingCollection = client.db("boilagbedb").collection("bookings");
         const paymentCollection = client.db("boilagbedb").collection("payments");
+        const blogsCollection = client.db("boilagbedb").collection("blogs");
 
         const verifySeller = async (req, res, next) => {
             const decodedEmail = req.decoded.email;
@@ -211,6 +212,12 @@ const run = async () => {
                 }
             }
             const updatedProduct = await productCollection.updateOne(filterProduct,updateStatus);
+            res.send(result);
+        })
+
+        app.get('/blogs', async(req,res)=>{
+            const query = {};
+            const result = await blogsCollection.find(query).toArray();
             res.send(result);
         })
 
