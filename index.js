@@ -42,12 +42,12 @@ const run = async () => {
         const paymentCollection = client.db("boilagbedb").collection("payments");
         const blogsCollection = client.db("boilagbedb").collection("blogs");
 
-        const verifySeller = async (req, res, next) => {
+        const verifySellerAdmin = async (req, res, next) => {
             const decodedEmail = req.decoded.email;
             const query = { email: decodedEmail };
             const user = await userCollection.findOne(query);
 
-            if (user?.accountType !== 'Seller') {
+            if (user?.accountType === 'Buyer') {
                 return res.status(403).send({ message: 'forbidden access' })
             }
             next();
@@ -96,6 +96,22 @@ const run = async () => {
             res.send(result);
         })
 
+        app.delete('/admin/users/:id',verifyJWT, async(req,res)=>{
+            const id = req.params.id;
+            const query = {
+                _id:ObjectId(id)
+            };
+            
+            const getUser = await userCollection.findOne(query);
+            // console.log(getUser)
+            if(getUser.accountType === 'Buyer'){
+                const filter = {buyerEmail:getUser.email};
+                const deleteBookings = await bookingCollection.deleteMany(filter);
+            }
+            const result = await userCollection.deleteOne(query);
+            res.send(result);
+        })
+
         app.put('/admin/users/:id', verifyJWT, async (req, res) => {
             const id = req.params.id;
             const filter = { _id: ObjectId(id) }
@@ -126,7 +142,7 @@ const run = async () => {
             res.send({ accountType });
         })
 
-        app.post('/products', verifyJWT, verifySeller, async (req, res) => {
+        app.post('/products', verifyJWT, verifySellerAdmin, async (req, res) => {
             const product = req.body;
             const date = new Date();
             const options = {
@@ -135,6 +151,12 @@ const run = async () => {
             };
             const formatedDateTime = date.toLocaleTimeString("en-us", options);
             product.postTime = formatedDateTime;
+            const sellerEmail = product.email;
+            const query = {email:sellerEmail};
+            const seller = await userCollection.findOne(query);
+            if(seller.isVerified){
+                product.verifiedSeller = true;
+            }
             const result = await productCollection.insertOne(product);
             res.send(result);
         })
@@ -152,7 +174,28 @@ const run = async () => {
             res.send(result);
         });
 
-        app.delete('/products/:id', verifyJWT, verifySeller, async (req, res) => {
+        app.put('/products/report/:id',verifyJWT, async(req,res)=>{
+            const id = req.params.id;
+            const filter = {_id:ObjectId(id)};
+            const options = {upsert:true};
+            const updatedDoc = {
+                $set: {
+                    reported: true
+                }
+            }
+            const result = await productCollection.updateOne(filter, updatedDoc, options);
+            res.send(result);
+        })
+
+        app.get('/products/report',verifyJWT, async(req,res)=>{
+            const query = {
+                reported:true
+            };
+            const result = await productCollection.find(query).toArray();
+            res.send(result);
+        })
+
+        app.delete('/products/:id', verifyJWT, verifySellerAdmin, async (req, res) => {
             const id = req.params.id;
             const filter = { _id: ObjectId(id) };
             const result = await productCollection.deleteOne(filter);
