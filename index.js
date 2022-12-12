@@ -178,12 +178,16 @@ const run = async () => {
             const id = req.params.id;
             const filter = {_id:ObjectId(id)};
             const options = {upsert:true};
+            const report = req.body;
             const updatedDoc = {
                 $set: {
-                    reported: true
+                    reported: true,
+                    reportReason:report.reportReason,
+                    resportedBy:report.reportedBy
                 }
             }
             const result = await productCollection.updateOne(filter, updatedDoc, options);
+            // console.log(updatedDoc);
             res.send(result);
         })
 
